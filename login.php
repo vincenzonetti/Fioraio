@@ -112,7 +112,7 @@
                     $sql = 'INSERT INTO privati (nome,indirizzo,email,password) VALUES ("' . $user . '","' . $indirizzo . '","' . $email . '","' . $password . '")';
                     if ($query = mysqli_query($con, $sql)) {
 
-                        echo ' <script>alert("Privato eseguita correttamente ' . $email . '")</script>';
+                        echo ' <script>alert("Privato inserito correttamente ' .   '")</script>';
                     }
                 }
                 break;
@@ -140,7 +140,7 @@
                     $sql = 'INSERT INTO rivenditori (nome,indirizzo,partitaIva,password) VALUES ("' . $user . '","' . $indirizzo . '","' . $pIVA . '","' . $password . '")';
                     if ($query = mysqli_query($con, $sql)) {
 
-                        echo ' <script>alert("Rivenditore inserito correttamente ' . $pIVA . '")</script>';
+                        echo ' <script>alert("Rivenditore inserito correttamente ' .   '")</script>';
                     }
                 }
 
@@ -161,7 +161,7 @@
             case 'privati':
                $sql="SELECT * FROM privati WHERE nome='".$user."' AND password= '".$pass."'";
 
-              echo $sql; 
+            /*   echo $sql;  */
                $query = mysqli_query($con, $sql);
                if ($query) {
                    $num = mysqli_num_rows($query);

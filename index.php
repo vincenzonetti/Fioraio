@@ -101,7 +101,9 @@
             width: fit-content;
 
         }
-
+img{
+    border-radius: 20px;
+}
         .article-container {
             text-align: center;
             margin: 50px;
@@ -134,14 +136,38 @@
         #table-container {
             background-color: rgba(255, 255, 255, 0.5);
             width: fit-content;
-            /* display: flex;
-            justify-content: center; */
+          
             margin: auto;
         }
 
         .toColor {
             background-color: orange;
         }
+        #insSpecie-container{
+         
+           display: flex;
+           justify-content: center;
+           padding: 20px;
+        }
+        #insSpecie-container>form{
+            border: solid black;
+            padding: 20px;
+        }
+ 
+      #admin-nav{
+          display: flex;
+          justify-content: space-evenly;
+      }
+      input[type=submit],button {
+     
+    border-radius: 5px;
+    border: 0;
+    width: 80px;
+    height:25px;
+    font-weight: bold;
+    background: #f4f4f4;
+}
+
     </style>
 </head>
 
@@ -166,10 +192,12 @@
                 echo ("<p>Errore nella selezione del database.</p>");
                 exit();
             }
+           
             session_start();
             if (isset($_REQUEST['logOut'])) {
                 session_destroy();
                 header('location:login.php');
+                
             }
             if (isset($_SESSION['tipo'])) {
                 $tipo = $_SESSION['tipo'];
@@ -289,9 +317,14 @@
                         /* SEZIONE ADMIN */
                         echo '<div id="adminPanel">';
                         echo '<div id="admin-nav"><h3>Benvenuto Dipendente</h3>  
+                        <form action="index.php">
+                        <input type="submit" value="Aggiorna">
+                        </form> 
                        <form action="index.php" >
                         <input type="submit" value="Log out" name="logOut" id="esci">
-                        </form></div>';
+                        </form>
+                    
+                        </div>';
                         /* FORM INBSERIMENTO SPECIE */
                         echo '<div id="insSpecie-container">
                         <form action="index.php"  method="post" enctype="multipart/form-data">
@@ -329,12 +362,12 @@
                         if ($esegui) {
                             $num = mysqli_num_rows($esegui);
                             if ($num > 0) {
-                                echo '<tr id="checkboxColor" style="display:none"><td>Colore:</td>';
+                                echo '<tr id="checkboxColor" style="display:none"><td>Colore:</td><td class="checkbox-group required">';
                                 for ($k = 0; $k < $num; $k++) {
                                     $riga = $esegui->fetch_array(MYSQLI_ASSOC);
-                                    echo '<td><input type="checkbox" id="colore' . $k . '" name="colore' . $k . '" value="' . $riga["idColorazione"] . '">' . $riga["denominazione"] . '|</td>';
+                                    echo '<input type="checkbox" id="colore' . $k . '" name="colore[]" value="' . $riga["idColorazione"] . '">' . $riga["denominazione"] . '|';
                                 }
-                                echo '</tr>';
+                                echo '</td></tr>';
                             }
                         }
                         echo '<tr><td>Fornitore</td>
@@ -352,26 +385,46 @@
                             }
                         }
                         echo '</select></td></tr>';
+                        echo '<tr>
+                        <td>Prezzo:</td>
+                        <td><input type="number" name="costo" id="" min="10" max="99999"></td>
+                        </tr>';
                         echo '<tr><td>Carica Immagine pianta:</td>
-                         <td><input type="file" name="fileToUpload" id="fileToUpload">';
+                         <td><input type="file" name="fileToUpload" id="fileToUpload" required>';
                         echo '<tr><td colspan="2"><input type="submit" value="Inserisci Specie" name="insertSpecie"></td></tr>';
                         echo '</table></form>';
                         echo '</div>';
                         if (isset($_POST['insertSpecie'])) {
+                            $flagForm = 0;
                             $nomeS = $_POST["specieN"];
                             $nomeLatS = $_POST["specieLatinN"];
                             $uso = $_POST["specieUso"];
                             $esotica = $_POST["specieEsotica"];
                             $sTipo = $_POST["specieTipo"];
                             if ($sTipo === "fiorita") {
-                                $insColori = $_POST["colore"];
+                                if (isset($_POST['colore'])) {
+                                    $insColori = $_POST["colore"];
+                                } else {
+                                    $flagForm = 1;
+                                }
                             }
+                            $costo = $_POST['costo'];
                             $idFornitore = $_POST['idFornitore'];
+                            /*   if ($sTipo === "fiorita") {
+                                if (is_array($insColori)) {
+                                    foreach($insColori as $value){
+                                      echo $value . '<br>';
+                                    }
+                                  } else {
+                                    $value = $insColori;
+                                    echo $value. 'ds';
+                                  }
+                            } */
                             $target_dir = "C:/xampp/htdocs/Fioraio/imgs/";
                             $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
                             $uploadOk = 1;
-                            $nomeFile= substr(  basename($_FILES["fileToUpload"]["name"]),0,-4);
-                          
+                            $nomeFile = substr(basename($_FILES["fileToUpload"]["name"]), 0, -4);
+
                             $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
                             $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
                             if ($check !== false) {
@@ -381,7 +434,7 @@
                                 echo "<p>Il file non è un immagine.</p>";
                                 $uploadOk = 0;
                             }
-                            if($nomeFile!=$nomeS){
+                            if ($nomeFile != $nomeS) {
                                 echo '<p>Il nome del file deve coincidere con il nome della specie</p>';
                                 $uploadOk = 0;
                             }
@@ -393,21 +446,187 @@
                                 echo "<p>L'immagine puo essere esclusivamente in formato jpg.</p>";
                                 $uploadOk = 0;
                             }
-                          
+
                             if ($uploadOk == 0) {
                                 echo "<p>L'immagine non è stata caricata.</p>";
-                              // if everything is ok, try to upload file
-                              } else {
+                                // if everything is ok, try to upload file
+                            } else if ($flagForm === 1) {
+                                echo "<p>Una specie fiorita deve avere almeno una colorazione.</p>";
+                            } else {
                                 if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-                                  echo "<p>Il ". htmlspecialchars( basename( $_FILES["fileToUpload"]["name"])). " è stato caricato.";
-                                } else {
-                                  echo "<p>C'è stato un errore nel caricamento dell'immagine.</p>";
+                                    /* In questo caso il file viene correttamente caricato */
+                                    /* echo "<p>L'immagine " . htmlspecialchars(basename($_FILES["fileToUpload"]["name"])) . " è stata caricato.";
+                                    echo $nomeS . '<br>';
+                                    echo $nomeLatS . '<br>';
+                                    echo $uso . '<br>';
+                                    echo $esotica . '<br>';
+                                    echo $sTipo . '<br>';
+                                    echo $idFornitore . '<br>';
+
+                                  
+                                    echo $costo . '<br>'; */
+                                    $sqlInsert1 = 'INSERT INTO specie (nome, nomeLatino, uso, esotica, tipo, idFornitore)
+                                    VALUES ("' . $nomeS . '","' . $nomeLatS . '","' . $uso . '","' . $esotica . '","' . $sTipo . '","' . $idFornitore . '")';
+                                    $esegui = mysqli_query($con, $sqlInsert1);
+                                    if ($esegui) {
+                                       
+                                        $sqlidSpecie="SELECT * FROM specie WHERE nome='".$nomeS."'";
+                                        $esegui2 = mysqli_query($con, $sqlidSpecie);
+                                        if ($esegui2) {
+                                            $riga = $esegui2->fetch_array(MYSQLI_ASSOC);
+                                            echo $riga['idSpecie'];
+                                    if ($sTipo === "fiorita") {
+                                            
+                                          
+                                               
+                                                foreach ($insColori as $value) {
+                                                   $sql='INSERT INTO specie_colorazioni (idColorazione, idSpecie)
+                                                   VALUES ('.$value.','.$riga["idSpecie"].')';
+                                                    $esegui = mysqli_query($con, $sql);
+                                                
+                                                }
+                                            }
+                                            $oggi = getdate();
+                                            $dataT = $oggi['year'] . '-' . $oggi['mon'] . '-' . $oggi['mday'];
+                                            $sqlCost='INSERT INTO prezzi (dataInizio, dataFine, prezzo, idSpecie)
+                                            VALUES ("'.$dataT.'", NULL,"' . $costo . '","' . $riga["idSpecie"]. '" )';
+                                             $eseguiCost = mysqli_query($con, $sqlCost);
+                                             
+                                              if($eseguiCost){
+                                                echo '<script>alert("Specie Inserita con Successo") </script>';
+                                              }  
+                                    }
+                                    
                                 }
-                              }
-                            echo $nomeS . $nomeLatS . $sTipo;
+                                } else {
+                                    echo "<p>C'è stato un errore nel caricamento dell'immagine.</p>";
+                                }
+                            }
+                        }
+                        echo '<div id=alterPrice-container"  style="display: flex;
+                        justify-content: center;
+                        padding: 20px;">';
+
+                        echo '<form action="index.php" style="  border: solid black;
+                        padding: 20px;">
+                        <h3>Aggiorna Listino</h3>
+                        <table><tr>
+                        <td>Prezzo da modificare</td><td><select name="newPrice">';
+                        $sql="SELECT p.*,s.* 
+                        FROM prezzi as p 
+                        INNER JOIN specie as s
+                        ON s.idSpecie=p.idSpecie AND p.dataFine IS NULL";
+                        $exe= mysqli_query($con, $sql);
+                        $nums = mysqli_num_rows($exe);
+                        for($k=0;$k<$nums;$k++){
+                            $riga = $exe->fetch_array(MYSQLI_ASSOC);
+                            echo'<option value="'.$riga['idPrezzo'].' | '.$riga["idSpecie"].'">Specie: '.$riga['nome'].' |P. Attuale: '.$riga['prezzo'].' | id P. Attuale: '.$riga['idPrezzo'].'</option>';
+                        }
+                      echo'<td>  </tr>
+                      <tr>
+                      <td>Nuovo prezzo</td>
+                      <td><input type="number" name="prezzo" id="" min="10" max="99999" required></td>
+                      </tr>
+                      <tr>
+                      <td>
+                      <input type="submit" value="Modfica Prezzo" name="modPrice">
+                      </td>
+                      </tr>
+                      ';
+                      
+                      echo '</table></form></div>';
+                      if (isset($_REQUEST['modPrice'])) {
+                        $pieces = explode("|", $_REQUEST['newPrice']);
+                        $idPrezzo=$pieces[0];
+                        $idSpecie=$pieces[1];
+                        $newP=$_REQUEST['prezzo'];
+                        $oggi = getdate();
+                        $dataT = $oggi['year'] . '-' . $oggi['mon'] . '-' . $oggi['mday'];
+                        $sqlUpdate='UPDATE prezzi
+                        SET dataFine = "'.$dataT.'"
+                        WHERE idPrezzo='.$idPrezzo;
+                    /*     echo $sqlUpdate . '<br>';
+                        echo $idPrezzo . '<br>';
+                        echo $idSpecie . '<br>'; */
+                        
+                         $exe= mysqli_query($con, $sqlUpdate);
+                        if($exe){
+                            $sqlIns='INSERT INTO prezzi (dataInizio, dataFine, prezzo, idSpecie)
+                            VALUES ("'.$dataT.'", NULL,"' . $newP . '","' . $idSpecie. '" )';
+                            $exe2= mysqli_query($con, $sqlIns);
+                           /*  echo $sqlIns; */
+                            if($exe2){
+                                echo '<script>alert("Prezzo aggiornato con successo") </script>';
+                               
+                     
+                            }
+                        }
+                      }
+                      echo '<div  style="display: flex;
+                      justify-content: center;
+                      padding: 20px;"
+                      >';
+                      echo '<form action="index.php" style="  border: solid black;
+                        padding: 20px;">
+                        <h3>Inserisci Fornitore</h3>
+                        <table><tr>
+                        <td>Nome</td><td><input type="text" name="nomeForn" maxlength="30" id="" required></td><tr>';
+                        echo '<tr>
+                        <td>Codice Fiscale</td>
+                        <td><input type="text" name="codiceFiscale" id="" maxlength="16" minlength="16" required></td>
+                        </tr>
+                        <tr>
+                        <td>
+                        <input type="submit" value="Inserisci fornitore" name="insForn">
+                        </td>
+                        ';
+                        echo '</table></form></div>';
+                        if (isset($_REQUEST['insForn'])) {
+                            $nomeF=ucfirst($_REQUEST["nomeForn"]);
+                            $CF= strtoupper($_REQUEST["codiceFiscale"]);
+                           
+                          /*   echo $nomeF . '<br>';
+                            echo $CF . '<br>';         */
+                            $sqlInsertF= 'INSERT INTO fornitori (Nome, codiceFiscale)
+                            VALUES ("'.$nomeF.'","'.$CF.'")';
+                            $exeIF= $exe2= mysqli_query($con, $sqlInsertF);
+                            if($exeIF){
+                                echo '<script>alert("Fornitore inserito con successo") </script>';
+                            }
+                        }
+                        echo '<div  style="display: flex;
+                      justify-content: center;
+                      padding: 20px;"
+                      >';
+                      echo '<form action="index.php" style="  border: solid black;
+                        padding: 20px;">
+                        <h3>Inserisci Colorazione</h3>
+                        <table><tr>
+                        <td>Nome</td><td><input type="text" name="nomeColor" maxlength="30" id="" required></td><tr>';
+                        echo '<tr>
+                        <td>Codice Esadecimale</td>
+                        <td><input type="text" name="hexCode" id="" maxlength="6"  required></td>
+                        </tr>
+                        <tr>
+                        <td>
+                        <input type="submit" value="Inserisci Colorazione" name="insColor">
+                        </td>
+                        ';
+                        echo '</table></form></div>';
+                        if (isset($_REQUEST['insColor'])) {
+                            $nomeCol=ucfirst($_REQUEST["nomeColor"]);
+                            $hexCol= $_REQUEST["hexCode"];
+                           
+                        
+                            $sqlInsertC= 'INSERT INTO colorazioni (denominazione, hex)
+                            VALUES ("'.$nomeCol.'","'.$hexCol.'")';
+                            $exeIC= $exe2= mysqli_query($con, $sqlInsertC);
+                            if($exeIC){
+                                echo '<script>alert("Colorazione inserita con successo") </script>';
+                            }
                         }
                         echo '</div>'; /* <- DIV bianco */
-
+                    
                         /* Operazioni dopo il submit */
 
                         break;
@@ -574,13 +793,13 @@
     <script>
         let oBtn = $('#ordiniBtn');
         let mBtn = $('#marketBtn');
-        console.log("ok")
+
         oBtn.on("click", function() {
             marketBtn.style.display = ""
             ordiniBtn.style.display = "none"
             orderscontainer.style.display = ""
             articlescontainer.style.display = "none"
-            console.log("ok")
+
         })
         mBtn.on("click", function() {
             marketBtn.style.display = "none"
@@ -588,29 +807,21 @@
             orderscontainer.style.display = "none"
             articlescontainer.style.display = "grid"
         })
-        $('input[type=radio][name=specieTipo]').change(function() {
 
-            if (this.value == 'privati') {
-                $('#rIVA').addClass('unRequired')
-                $('#rIVA').prop('required', false);
-                $('#rEmail').removeClass('unRequired');
-                $('#rEmail').prop('required', true);
-                $('.unRequired').val('')
-                /* rIVA.style.display='none';
-                rEmail.style.display=''; */
+        $('input[type=radio][name=specieTipo]').change(function() {
+            console.log("ok")
+            if (this.value == 'verde') {
+                checkboxColor.style.display = "none"
 
             }
-            if (this.value == 'rivenditori') {
-                $('#rEmail').addClass('unRequired')
-                $('#rEmail').prop('required', false);
-                $('#rIVA').removeClass('unRequired');
-                $('#rIVA').prop('required', true);
-                $('.unRequired').val('')
-                /*  rIVA.style.display='';
-                 rEmail.style.display='none'; */
+            if (this.value == 'fiorita') {
+                checkboxColor.style.display = ""
 
             }
         })
+        /*         if(!$('div.checkbox-group.required :checkbox:checked').length > 0){
+                    
+                } */
     </script>
 </body>
 
